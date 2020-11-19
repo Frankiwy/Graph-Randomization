@@ -258,24 +258,23 @@ p5 <- ggplot(D5, aes(x=log(V1), y=log(V3))) +
   )
 
 graph_names <- c("graph 1","graph 2","graph 3","graph 4","graph 5")
-lm_resuls <- rep(0,5)
+lm_function <- rep(0,5)
 df_list = list(D1, D2, D3, D4, D5)
 counter = 1
 
 for (df in df_list){
   c_lm <- lm(V3~V1, data = df)
   strg <- paste("y = ",toString(round(c_lm$coefficients[[1]],2)),
-                toString(round(c_lm$coefficients[[2]],2)), 'x', sep="")
-  lm_resuls[counter] = strg
+                paste(toString(round(c_lm$coefficients[[2]],2)), 'x', sep=""),
+                sep=" ")
+  lm_function[counter] = strg
   counter = counter +1
 }
 
 grid.arrange(p1, p2, p3, p4, p5, nrow=2, ncol=3)
 
 # Table
-lm_table <- data.frame(cbind(graph_names, lm_resuls)) %>% gt()
-lm_table
-
+kable(data.frame(cbind(graph_names, lm_function)), caption= "Fitted regression lines")
 ```
 
 
