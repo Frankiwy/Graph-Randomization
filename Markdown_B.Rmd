@@ -23,6 +23,7 @@ library(glue)
 library(ggplot2)
 library(gridExtra)
 library(gt)
+library(knitr)
 ```
 
 In order to generate a graph it has been decided to represent it has list of edges. Our implementation uses two vectors in order to speed up the process even further.
@@ -276,6 +277,34 @@ lm_table <- data.frame(cbind(graph_names, lm_resuls)) %>% gt()
 lm_table
 
 ```
+
+
+In order to check, also numerically, that our degree distribution follow a power law the Kolmogorov–Smirnov test has been used. This test is a non-parametric statistical test, meaning that it doesn’t assume any particular underlying distribution, so it can be used to check if a data generated distribution follow a well known distribution. The igraph library provides fit_power_law() function that fit a power law distribution with our discrete data. The function returns the KS_stat and the p-value. The KS_stat tells us how well the power law distribution fit our data, i.e higher is this value better it is. However, this measure does not tell us how likely it is that our data are drawn from power law. For that reason the function return also the p-value. It also necessary to specify that the here a two-sided test has been performed. If the p-value is above the critical value (p-value > $\alpha$) than, we accept the $H_{0}$ otherwise we reject $H_{0}$.
+Below is reported a summary table with the KS_statisistics and the p-value:
+
+```{r echo = FALSE, results = 'asis', include=TRUE}
+
+ks_stat <- rep(0, 5)
+p_value <- rep(0, 5)
+m = 1
+for (df in df_list){
+  
+  results <- fit_power_law(df$V2)
+  ks_stat[m] <- round(results$KS.stat,2)
+  p_value[m] <- round(results$KS.p,2)
+  m = m+1
+}
+
+ks_df <- data.frame(cbind(graph_names, ks_stat, p_value))
+kable(ks_df, caption= "Kolmogorov-Smirnov Goodness of Fit Test")
+```
+
+
+
+
+
+
+
 
 
 
