@@ -26,19 +26,23 @@ library(gt)
 library(knitr)
 ```
 
+```{r include=FALSE}
+set.seed(1765820)
+```
+
 In order to generate a graph it has been decided to represent it has list of edges. Our implementation uses two vectors in order to speed up the process even further.
 
-```{r include=TRUE, eval=FALSE}
+```{r include=TRUE, eval=TRUE}
 rep.row<-function(x,n){
   matrix(rep(x,each=n),nrow=n)
 } # the function is used to pre-allocate the matrix of all the edges
 
 # the "graph_generator" generates the graph
-graph_generator <- function(Num_nodes){
+graph_generator <- function(Num_nodes, gamma=.5){
   
   E_one=1:Num_nodes
   E_two=rep(0,Num_nodes) 
-  # we found out that using 2 vectors instead of a matrix with 2 columns gives a minor 
+  # we found out that using 2 vectors instead of a matrix with 2 columns gives a      minor 
   # boost in the computation speed.
   E_two[1] <-2 
   E_two[2] <-3
@@ -47,7 +51,7 @@ graph_generator <- function(Num_nodes){
   
   
   for (new_vertex in 5:Num_nodes){
-    if (rbern(n = 1, prob=0.5) ==1) {
+    if (rbern(n = 1, prob=gamma) ==1) {
       get_vertex = sample(E_one[1:(new_vertex-1)], 1) 
       # choosing existing node uniformly    
       E_two[new_vertex] <-get_vertex
@@ -70,7 +74,7 @@ The "cumulative_empirical" function computes the empirical degree distribution a
 - empirical degree distribution,
 - cumulative degree distribution.
 
-```{r include=TRUE, eval=FALSE}
+```{r include=TRUE, eval=TRUE}
 cumulative_empirical = function(E){
   
   E_one = E$one # staring node vector 
@@ -146,7 +150,6 @@ for (i in 1:5){
 2. Does the degree distribution appear to follow a power law or a Poisson? Explain and comment by showing suitable visual and numerical evidence that supports your reasoning.
 
 
-# plottare cumulative distribution with regression line.....
 
 ```{r include=TRUE, eval=TRUE}
 
@@ -199,6 +202,8 @@ legend("topright", legend=c("Graph 1", "Graph 2", "Graph 3", "Graph 4", "Graph 5
        col=c("red", "blue", "green", "orange", "purple"), lty = 1:5, cex=0.5, bty='o',
        bg='lightgrey', title = "Networks:")
 ```
+
+As a preliminary analysis we simply try to see how close our distributions are to a power law visually. For that reason we simply plotted the regression lines on the distributions and see how close they are to a straight line.  
 
 
 ```{r include=TRUE, eval=TRUE, message=FALSE, warning=FALSE}
@@ -263,7 +268,7 @@ df_list = list(D1, D2, D3, D4, D5)
 counter = 1
 
 for (df in df_list){
-  c_lm <- lm(V3~V1, data = df)
+  c_lm <- lm(V3~V1, data = log(df[-nrow(df),])) # removing last row because it has 0
   strg <- paste("y = ",toString(round(c_lm$coefficients[[1]],2)),
                 paste(toString(round(c_lm$coefficients[[2]],2)), 'x', sep=""),
                 sep=" ")
@@ -273,13 +278,18 @@ for (df in df_list){
 
 grid.arrange(p1, p2, p3, p4, p5, nrow=2, ncol=3)
 
+```
+
+WARNING: Be careful, the following coefficients and the intercepts are shown only to give an idea of the slope of the regression lines, and are not to be taken as a serious statistical test. 
+
+```{r}
 # Table
 kable(data.frame(cbind(graph_names, lm_function)), caption= "Fitted regression lines")
 ```
 
 
-In order to check, also numerically, that our degree distribution follow a power law the Kolmogorov–Smirnov test has been used. This test is a non-parametric statistical test, meaning that it doesn’t assume any particular underlying distribution, so it can be used to check if a data generated distribution follow a well known distribution. The igraph library provides fit_power_law() function that fit a power law distribution with our discrete data. The function returns the KS_stat and the p-value. The KS_stat tells us how well the power law distribution fit our data, i.e higher is this value better it is. However, this measure does not tell us how likely it is that our data are drawn from power law. For that reason the function return also the p-value. It also necessary to specify that the here a two-sided test has been performed. If the p-value is above the critical value (p-value > $\alpha$) than, we accept the $H_{0}$ otherwise we reject $H_{0}$.
-Below is reported a summary table with the KS_statisistics and the p-value:
+By digging into the igraph library we found a function called fit_power_law(), that fits the empirical data with a power law distribution and then computes the goodness of the fit with the Kolmogorov–Smirnov test. This should return a more robust statistical result. The function returns the KS_stat and the p-value. The KS_stat tells us how well the power law distribution fits our data, i.e to a lower value better corresponds a better fit. However, this measure alone is not enough to tell how likely it is that data is drawn from a power law. For that reason the function also returns the p-value. This is a two-sided test, with a confidence interval $\alpha$ that has to be chosen when running the test, usually the used values are 1%, 3%, 5%. In this case it is irrelevant which value of $\alpha$ one chooses because the returned p-value is very close to one (when rounded to two decimals, as in the table below, it is exactly 1). If the p-value is above the critical value (p-value > $\alpha$) then, we accept the $H_{0}$ otherwise we reject $H_{0}$.
+Below is reported a summary table with the KS_statistics and the p-value:
 
 ```{r echo = FALSE, results = 'asis', include=TRUE}
 
@@ -288,7 +298,7 @@ p_value <- rep(0, 5)
 m = 1
 for (df in df_list){
   
-  results <- fit_power_law(df$V2)
+  results <- fit_power_law(df$V2, xmin=1)
   ks_stat[m] <- round(results$KS.stat,2)
   p_value[m] <- round(results$KS.p,2)
   m = m+1
@@ -299,6 +309,14 @@ kable(ks_df, caption= "Kolmogorov-Smirnov Goodness of Fit Test")
 ```
 
 
+As a comparison, this is the result of a KS test on a graph generated with $\gamma$ = 1 
+
+```{r}
+
+#graph_gamma = graph_generator(1000, 1)
+
+
+```
 
 
 
