@@ -73,9 +73,8 @@ cumulative_empirical = function(E){
   indexes=unique(sorted_in_nodes) # it's the number of nodes where the cumulative changes
   
   A=rep.row(c(0,0,0),length(indexes)) 
-  # pre-allocate the matrix. In the first column there are the values representing
-  # the node where there is at least awhere there is 
-  # 
+  # pre-allocate the matrix. In the first column there are the values where there is
+  # at least one node with that in-degree 
   
   A[,1]=indexes
   
@@ -288,9 +287,78 @@ for (df in df_list){
 
 ##################
 
-graph_gamma = graph_generator(1000, 1)
+for (n in 0:10){
+  
+  graph_gamma = graph_generator(50000,.64)
+  cm_em_gamma = cumulative_empirical(graph_gamma)
+  
+  print(glue("gamma={n/10}"))
+  print(fit_power_law(cm_em_gamma[,2], xmin=1)$KS.p)
+  plot(x=cm_em_gamma[,1], y=cm_em_gamma[,3], log="xy")
+  
+}
+
+graph_gamma = graph_generator(50000, .63)
 cm_em_gamma = cumulative_empirical(graph_gamma) 
 
+
+fit_power_law(cm_em_gamma[,2], xmin=1)
+
+plot(x=cm_em_gamma[,1], y=cm_em_gamma[,3], log="xy")
+
+
+###################################################
+
+
+g1 = graph_from_edgelist(as.matrix(A1), directed = TRUE)
+
+Num_nodes = length(A1$E_two)
+in_nodes=rep(0,Num_nodes) # pre-allocate a vector with 0
+for (i in 1:Num_nodes){
+  in_nodes[A1$E_two[i]]=in_nodes[A1$E_two[i]]+1
+}
+
+g_1000 <- graph_generator(100000)
+
+g_graph_1000 <- graph_from_edgelist(cbind(g_1000$one,g_1000$two), directed = FALSE)
+g_graph_1000
+
+plot(g_graph_1000, vertex.size = 0, edge.size = 0.001, vertex.label=NA, vertex.frame.color=NA, vertex.color =NA, edge.color='black')#node.label=NA)#, arrow.size = 0, arrow.width = 0, arrow.mode=)
+
+
+g_1000_random = graph_generator(100000,gamma=1)
+g_1000_random = graph_from_edgelist(cbind(g_1000_random$one,g_1000_random$two), directed = FALSE)
+
+plot(g_1000_random, vertex.size = 0, edge.size = 0.001, vertex.label=NA, vertex.frame.color=NA, vertex.color =NA, edge.color='black')#node.label=NA)#, arrow.size = 0, arrow.width = 0, arrow.mode=)
+
+
+list_nodes <- c(3,4,5,10)
+plot(ER_graph, vertex.color=c("purple",'green')[1+(V(VS_graph)%in%list_nodes)],
+     vertex.size=30, vertex.frame.color="black", vertex.label.color="black",
+     vertex.label.cex=1, vertex.label.dist=0,
+     edge.curved=0, edge.color='black',
+     xlim=c(-1,1), ylim=c(-1,1))
+title("Erdős–Rényi", adj = 0, line = -5)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+in_nodes
 
 
 

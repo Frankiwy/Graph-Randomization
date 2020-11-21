@@ -143,12 +143,10 @@ for (i in 1:5){
   write.csv(A, glue("networks_final/network_{i}.csv"), row.names = F)
   print(glue('graph {i} stored'))
 }
-
 ```
 
 
 2. Does the degree distribution appear to follow a power law or a Poisson? Explain and comment by showing suitable visual and numerical evidence that supports your reasoning.
-
 
 
 ```{r include=TRUE, eval=TRUE}
@@ -288,8 +286,11 @@ kable(data.frame(cbind(graph_names, lm_function)), caption= "Fitted regression l
 ```
 
 
-By digging into the igraph library we found a function called fit_power_law(), that fits the empirical data with a power law distribution and then computes the goodness of the fit with the Kolmogorov–Smirnov test. This should return a more robust statistical result. The function returns the KS_stat and the p-value. The KS_stat tells us how well the power law distribution fits our data, i.e to a lower value better corresponds a better fit. However, this measure alone is not enough to tell how likely it is that data is drawn from a power law. For that reason the function also returns the p-value. This is a two-sided test, with a confidence interval $\alpha$ that has to be chosen when running the test, usually the used values are 1%, 3%, 5%. In this case it is irrelevant which value of $\alpha$ one chooses because the returned p-value is very close to one (when rounded to two decimals, as in the table below, it is exactly 1). If the p-value is above the critical value (p-value > $\alpha$) then, we accept the $H_{0}$ otherwise we reject $H_{0}$.
-Below is reported a summary table with the KS_statistics and the p-value:
+By digging into the igraph library we found a function called fit_power_law(), that fits the empirical data with a power law distribution and then computes the goodness of the fit with the two-sided Kolmogorov–Smirnov test. This should return a more robust statistical result. The function returns the KS_stat and the p-value. The KS_stat tells us how well the power law distribution fits our data, i.e to a lower value better corresponds a better fit. However, this measure alone is not enough to tell how likely it is that data is drawn from a power law. For that reason the function also returns the p-value. One has to choose a confidence interval $\alpha$ while running the test, usually the used values are 1%, 3%, 5%. Getting a value higher then the chosen $\alpha$ means that the fit is "good" and the higher the value is better the fit (sometimes we even get 1 when we rounded to two decimal places).
+
+P.S.
+We are both looking forward to learning more these kind of tests during the rest of the course.
+Below it is reported a summary table with the KS_statistics and the p-value:
 
 ```{r echo = FALSE, results = 'asis', include=TRUE}
 
@@ -309,14 +310,36 @@ kable(ks_df, caption= "Kolmogorov-Smirnov Goodness of Fit Test")
 ```
 
 
-As a comparison, this is the result of a KS test on a graph generated with $\gamma$ = 1 
+As a comparison, this is the result of a KS test on a graph generated with $\gamma$ = 1 (this means that every new link is added uniformly at random to already existing node).   
 
 ```{r}
-
-#graph_gamma = graph_generator(1000, 1)
-
-
+set.seed(1765820)
+graph_gamma = graph_generator(200, 1)
+cm_em_gamma = cumulative_empirical(graph_gamma)
+print(glue("p-value: {fit_power_law(cm_em_gamma[,2], xmin=1)$KS.p}"))
+#plot(x=cm_em_gamma[,1], y=cm_em_gamma[,3], log="xy")
 ```
+
+
+It is clear from the following graph and supported by the p-value KS-test on a power law fit, the generated graph does not follow a power law distribution.  
+```{r}
+cm_em_gamma_df = as.data.frame(cumulative_empirical(graph_gamma))
+p5 <- ggplot(cm_em_gamma_df, aes(x=log(V1), y=log(V3))) +
+  geom_point(size=1, color="#0294A5")+
+  geom_smooth(method=lm, se=FALSE, linetype="dashed", color="#C1403D")+ 
+  ggtitle(expression(paste("Cumulative & fitting line for ",gamma,"=1"))) +
+  xlab("K in log scale") + ylab("Cumulative in log scale") +
+  theme(
+    plot.title = element_text(color="#0294A5", size=8, face="bold.italic"),
+    axis.title.x = element_text(color="black", size=6, face="bold"),
+    axis.title.y = element_text(color="black", size=6, face="bold")
+  )
+p5
+```
+
+
+Plotting a graph with 1000000 
+
 
 
 
