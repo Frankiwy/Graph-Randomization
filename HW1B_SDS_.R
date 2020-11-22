@@ -351,18 +351,61 @@ title("Erdős–Rényi", adj = 0, line = -5)
 
 
 
+###################
+
+
+graph_gamma = graph_generator(200000, 1)
+cm_em_gamma = cumulative_empirical(graph_gamma)
+
+write.csv(graph_gamma, "graphs_matrices/graph_gamma.csv", row.names = F)
+write.csv(cm_em_gamma, glue("distributions_matrices/cm_em_gamma.csv"), row.names = F)
+
+######################
 
 
 
 
+# (1) graph with gamma = 1
+g_100000_random <- graph_generator(100,gamma=1)
+g_graph_100000_random <- graph_from_edgelist(cbind(g_100000_random$one,g_100000_random$two), directed = FALSE)# we have inserted directed=FALSE just because we don't want to plot the edges arrows in the visualization
+
+# (2) graph graph with gamma = .5
+g_100000 <- graph_generator(100)
+g_graph_100000 <- graph_from_edgelist(cbind(g_100000$one,g_100000$two), directed = FALSE) # we have inserted directed=FALSE just because we don't want to plot the edges arrows in the visualization
+
+
+plt_1 <- plot(g_graph_100000_random, vertex.size = 0, edge.size = 0.001,
+             vertex.label=NA, vertex.frame.color=NA, vertex.color =NA,
+             edge.color='black', main='Graph A')
+
+
+# (2) graph graph with gamma = .5
+plt_2 <- plot(g_graph_100000, vertex.size = 0, edge.size = 0.001, vertex.label=NA,
+             vertex.frame.color=NA, vertex.color =NA, edge.color='black',
+             main='Graph B')
 
 
 
-in_nodes
+Num_nodes=1000
+graph_10 = graph_generator(Num_nodes,gamma=1)
+g_graph_10 = graph_from_edgelist(cbind(graph_10$one,graph_10$two), directed = FALSE)
+in_nodes=rep(0,Num_nodes) # pre-allocate a vector with 0
+for (i in 1:Num_nodes){
+  in_nodes[graph_10$two[i]]=in_nodes[graph_10$two[i]]+1
+}
 
 
+vectors <- order(in_nodes, decreasing = TRUE)[1:5]
+V(g_graph_10)$color <- ifelse( V(g_graph_10) %in% vectors, "red", NA)
+V(g_graph_10)$size <- ifelse( V(g_graph_10) %in% vectors, 4, 0)
+plot(g_graph_10, edge.size = 0.001, vertex.label=NA,
+     vertex.frame.color=NA, edge.color='black',
+     main='Graph B')
+
+###################
 
 
+read.csv("performances.csv")
 
 
 

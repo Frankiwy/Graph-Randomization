@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## PART 2
 
-2. Write a program in R to simulate the preferential attachment process, starting with 4 pages linked together as a directed cycle on 4 vertices, adding pages each with one outlink until there are 1 million pages, and using $\gamma$ = 0.5 as the probability a link is to a page chosen uniformly at random and 1 − $\gamma$  = 0.5 as the probability a link is copied from existing links.
+### 2.1 Write a program in R to simulate the preferential attachment process, starting with 4 pages linked together as a directed cycle on 4 vertices, adding pages each with one outlink until there are 1 million pages, and using $\gamma$ = 0.5 as the probability a link is to a page chosen uniformly at random and 1 − $\gamma$  = 0.5 as the probability a link is copied from existing links.
 
 ```{r include=TRUE, message = FALSE, warning = FALSE}
 # libraries used:
@@ -26,8 +26,10 @@ library(gt)
 library(knitr)
 ```
 
-```{r include=FALSE}
+```{r include=TRUE, message=FALSE, warning=FALSE}
 set.seed(1765820)
+dir.create("graphs_matrices")
+dir.create("distributions_matrices")
 ```
 
 In order to generate a graph it has been decided to represent it has list of edges. Our implementation uses two vectors in order to speed up the process even further.
@@ -70,9 +72,9 @@ graph_generator <- function(Num_nodes, gamma=.5){
 ```
 
 The "cumulative_empirical" function computes the empirical degree distribution and cumulative degree distribution. It has been decided to work with a matrix becouse in this way we can return the 3 results in 1 object; more specifically: 
-- in degree value,
-- empirical degree distribution,
-- cumulative degree distribution.
+* in degree value,
+* empirical degree distribution,
+* cumulative degree distribution.
 
 ```{r include=TRUE, eval=TRUE}
 cumulative_empirical = function(E){
@@ -81,13 +83,10 @@ cumulative_empirical = function(E){
   E_two = E$two # ending node vector
   Num_nodes = length(E$one)
   
-  # we iterate through all the numbers in the E_two (which is the vector containing   # the end-nodes of
-  # the edges) and add one to the corresponding element in vector in_nodes
-  # (which is the vector containing the in-degree of the nodes).  
+  # we iterate through all the numbers in the E_two (which is the vector containing   # the end-nodes of the edges) and add one to the corresponding element in vector    #in_nodes (which is the vector containing the in-degree of the nodes).  
   # For example: 
   # if E_two = [2 3 4 1 2 2 5 2 3 5 5 5], we first add 1 to the second element of 
-  # the in_nodes vector, then to the third, then to the fourth, then first, second,
-  # second, fifth, etc...
+  # the in_nodes vector, then to the third, then to the fourth, then fifth, etc...
   # At the end, the in_nodes vector will be: [1 4 2 1 4 0 0 0 0 0 0 0] meaning that
   # the in-degree of node 1 is 1, the in-degree of node 2 is 4, etc...
 
@@ -100,9 +99,8 @@ cumulative_empirical = function(E){
   indexes=unique(sorted_in_nodes) # it's the number of nodes where the cumulative     changes
   
   A=rep.row(c(0,0,0),length(indexes)) 
-  # pre-allocate the matrix. In the first column there are the values representing
-  # the node where there is at least awhere there is 
-  # 
+  # pre-allocate the matrix. In the first column there are the values where there is
+  # at least one node with that in-degree 
   
   A[,1]=indexes
   
@@ -111,13 +109,12 @@ cumulative_empirical = function(E){
   j=1
   for (i in 1:length(indexes)){
     in_degree_value=A[i,1]
-    counter_empirical = 0 # here we reset the counter every time we change in-degree node
-    # because it is used to compute the empirical distribution.
+    counter_empirical = 0 # here we reset the counter every time we change in-degree node because it is used to compute the empirical distribution.
     while(j<=Num_nodes && sorted_in_nodes[j]==in_degree_value){
       
       # we calculate the empirical distribution with a single
       # loop trough the vector: we use the fact that vector is already sorted,
-      # so it is not necessary to look all the elements once we find the 
+      # so it is not necessary to look at all the elements once we find the 
       # first one which is different from the current in-degree value.
       counter_empirical = counter_empirical +1
       j=j+1
@@ -136,21 +133,24 @@ cumulative_empirical = function(E){
 }
 ```
 
-The code below generates 5 graphs with 1 million edges, and store each of them inside a network_{i}.csv file.
+The code below generates 5 graphs with 1 million edges, and stores each of them inside a graph_{i}.csv file. Moreover, also a matrix containing the empirical and cumulative distribution for each graph is stored into a .csv file.
 ```{r include=TRUE, eval=FALSE}
 for (i in 1:5){
-  A = cumulative_empirical(graph_generator(1000000))
-  write.csv(A, glue("networks_final/network_{i}.csv"), row.names = F)
+  gen_graph = graph_generator(1000000)
+  write.csv(gen_graph, glue("graphs_matrices/graph_{i}.csv"), row.names = F)
+  A = cumulative_empirical(gen_graph)
+  write.csv(A, glue("distributions_matrices/cum_dev_matrix_{i}.csv"), row.names = F)
   print(glue('graph {i} stored'))
 }
 ```
 
 
-2. Does the degree distribution appear to follow a power law or a Poisson? Explain and comment by showing suitable visual and numerical evidence that supports your reasoning.
+### 2.2 Does the degree distribution appear to follow a power law or a Poisson? Explain and comment by showing suitable visual and numerical evidence that supports your reasoning.
 
 
 ```{r include=TRUE, eval=TRUE}
 
+# here we import the cum_dev matrices (computed and stored before) for all the graphs.
 D1 = as.data.frame(read.csv("distributions_matrices/cum_dev_matrix_1.csv"))
 D2 = as.data.frame(read.csv("distributions_matrices/cum_dev_matrix_2.csv"))
 D3 = as.data.frame(read.csv("distributions_matrices/cum_dev_matrix_3.csv"))
@@ -159,8 +159,7 @@ D5 = as.data.frame(read.csv("distributions_matrices/cum_dev_matrix_5.csv"))
 
 ```
 
-
-
+Below are reported two plots showing respectively empirical and cumulative degree distributions for all the 5 generated graphs.
 
 ```{r include=TRUE, eval=TRUE}
 
@@ -170,17 +169,17 @@ plot(x = log(D1$V1), y=log(D1$V3), type = "l", col = "red", lty=1, lwd=2,
      xlab = "K in log scale", ylab = "cumulative in log scale",
      main="Cumulative in log-log scale")
 # Add a second line
-lines(x = log(D2$V1), y=log(D2$V3),  col = "blue", type = "l", lwd=2, lty = 2)#, log = 'xy')
+lines(x = log(D2$V1), y=log(D2$V3),  col = "blue", type = "l", lwd=2, lty = 2)
 # Add a third line
-lines(x = log(D3$V1), y=log(D3$V3),  col = "green", type = "l", lwd=2, lty = 3)#, log = 'xy')
+lines(x = log(D3$V1), y=log(D3$V3),  col = "green", type = "l", lwd=2, lty = 3)
 # Add a fourth line
-lines(x = log(D4$V1), y=log(D4$V3),  col = "orange", type = "l", lwd=2, lty = 4)#, log = 'xy')
+lines(x = log(D4$V1), y=log(D4$V3),  col = "orange", type = "l", lwd=2, lty = 4)
 # Add a fifth line
-lines(x = log(D5$V1), y=log(D5$V3),  col = "purple", type = "l", lwd=2, lty = 5)#, log = 'xy')
+lines(x = log(D5$V1), y=log(D5$V3),  col = "purple", type = "l", lwd=2, lty = 5)
 # Add a legend to the plot
 legend("topright", legend=c("Graph 1", "Graph 2", "Graph 3", "Graph 4", "Graph 5"),
       col=c("red", "blue", "green", "orange", "purple"), lty = 1:5, cex=0.5, bty='o',
-      bg='lightgrey', title = "Networks:")
+      bg='lightgrey', title = "Graphs:")
 
 
 # Create a first line
@@ -188,23 +187,27 @@ plot(x = log(D1$V1), y=log(D1$V2), type = "l", col = "red", lty=1, lwd=2,
      xlab = "K in log scale", ylab = "empirical in log scale",
      main="Empirical in log-log scale")#, log = 'xy')
 # Add a second line
-lines(x = log(D2$V1), y=log(D2$V2),  col = "blue", type = "l", lwd=2, lty = 2)#, log = 'xy')
+lines(x = log(D2$V1), y=log(D2$V2),  col = "blue", type = "l", lwd=2, lty = 2)
 # Add a third line
-lines(x = log(D3$V1), y=log(D3$V2),  col = "green", type = "l", lwd=2, lty = 3)#, log = 'xy')
+lines(x = log(D3$V1), y=log(D3$V2),  col = "green", type = "l", lwd=2, lty = 3)
 # Add a fourth line
-lines(x = log(D4$V1), y=log(D4$V2),  col = "orange", type = "l", lwd=2, lty = 4)#, log = 'xy')
+lines(x = log(D4$V1), y=log(D4$V2),  col = "orange", type = "l", lwd=2, lty = 4)
 # Add a fifth line
-lines(x = log(D5$V1), y=log(D5$V2),  col = "purple", type = "l", lwd=2, lty = 5)#, log = 'xy')
+lines(x = log(D5$V1), y=log(D5$V2),  col = "purple", type = "l", lwd=2, lty = 5)
 # Add a legend to the plot
 legend("topright", legend=c("Graph 1", "Graph 2", "Graph 3", "Graph 4", "Graph 5"),
        col=c("red", "blue", "green", "orange", "purple"), lty = 1:5, cex=0.5, bty='o',
-       bg='lightgrey', title = "Networks:")
+       bg='lightgrey', title = "Graphs:")
 ```
 
-As a preliminary analysis we simply try to see how close our distributions are to a power law visually. For that reason we simply plotted the regression lines on the distributions and see how close they are to a straight line.  
+As a preliminary analysis we simply try to see how close our distributions are to a power law visually. For that reason we plotted the regression lines on the distributions and see how close they are to a straight line.  
 
 
 ```{r include=TRUE, eval=TRUE, message=FALSE, warning=FALSE}
+
+# CODE TO PLOT GRAPHS DISTRIBUTIONS AND LINEAR REGRESSION:
+
+#(1) plot cumulative for graph 1
 p1 <- ggplot(D1, aes(x=log(V1), y=log(V3))) +
   geom_point(size=1, color="#DE8CF0")+
   geom_smooth(method=lm, se=FALSE, linetype="dashed", color="#BED905")+ 
@@ -216,6 +219,7 @@ p1 <- ggplot(D1, aes(x=log(V1), y=log(V3))) +
     axis.title.y = element_text(color="black", size=6, face="bold")
   )
 
+#(2) plot cumulative for graph 2
 p2 <- ggplot(D2, aes(x=log(V1), y=log(V3))) +
   geom_point(size=1, color="#525B56")+
   geom_smooth(method=lm, se=FALSE, linetype="dashed", color="#BE9063")+ 
@@ -227,6 +231,7 @@ p2 <- ggplot(D2, aes(x=log(V1), y=log(V3))) +
     axis.title.y = element_text(color="black", size=6, face="bold")
   )
 
+#(3) plot cumulative for graph 3
 p3 <- ggplot(D3, aes(x=log(V1), y=log(V3))) +
   geom_point(size=1, color="#00743F")+
   geom_smooth(method=lm, se=FALSE, linetype="dashed", color="#F2A104")+ 
@@ -238,6 +243,7 @@ p3 <- ggplot(D3, aes(x=log(V1), y=log(V3))) +
     axis.title.y = element_text(color="black", size=6, face="bold")
   )
 
+#(4) plot cumulative for graph 4
 p4 <- ggplot(D4, aes(x=log(V1), y=log(V3))) +
   geom_point(size=1, color="#36688D")+
   geom_smooth(method=lm, se=FALSE, linetype="dashed", color="#F49F05")+ 
@@ -249,6 +255,7 @@ p4 <- ggplot(D4, aes(x=log(V1), y=log(V3))) +
     axis.title.y = element_text(color="black", size=6, face="bold")
   )
 
+#(5) plot cumulative for graph 5
 p5 <- ggplot(D5, aes(x=log(V1), y=log(V3))) +
   geom_point(size=1, color="#0294A5")+
   geom_smooth(method=lm, se=FALSE, linetype="dashed", color="#C1403D")+ 
@@ -260,8 +267,16 @@ p5 <- ggplot(D5, aes(x=log(V1), y=log(V3))) +
     axis.title.y = element_text(color="black", size=6, face="bold")
   )
 
+grid.arrange(p1, p2, p3, p4, p5, nrow=2, ncol=3)
+
+```
+
+**WARNING:** The following coefficients and the intercepts are shown only to give an idea of the slope of the regression lines, and are not to be taken as a serious statistical test. 
+
+```{r}
+
 graph_names <- c("graph 1","graph 2","graph 3","graph 4","graph 5")
-lm_function <- rep(0,5)
+lm_function <- rep(0,5) # vector we are stored intercept and coef. of linear regression
 df_list = list(D1, D2, D3, D4, D5)
 counter = 1
 
@@ -274,34 +289,30 @@ for (df in df_list){
   counter = counter +1
 }
 
-grid.arrange(p1, p2, p3, p4, p5, nrow=2, ncol=3)
 
-```
 
-WARNING: Be careful, the following coefficients and the intercepts are shown only to give an idea of the slope of the regression lines, and are not to be taken as a serious statistical test. 
-
-```{r}
-# Table
+# Plot table with summary of regression lines
 kable(data.frame(cbind(graph_names, lm_function)), caption= "Fitted regression lines")
 ```
 
 
-By digging into the igraph library we found a function called fit_power_law(), that fits the empirical data with a power law distribution and then computes the goodness of the fit with the two-sided Kolmogorov–Smirnov test. This should return a more robust statistical result. The function returns the KS_stat and the p-value. The KS_stat tells us how well the power law distribution fits our data, i.e to a lower value better corresponds a better fit. However, this measure alone is not enough to tell how likely it is that data is drawn from a power law. For that reason the function also returns the p-value. One has to choose a confidence interval $\alpha$ while running the test, usually the used values are 1%, 3%, 5%. Getting a value higher then the chosen $\alpha$ means that the fit is "good" and the higher the value is better the fit (sometimes we even get 1 when we rounded to two decimal places).
+By digging into the igraph library we found a function called fit_power_law(), that fits the empirical data with a power law distribution and then computes the goodness of the fit with the Kolmogorov–Smirnov test. This should return a more robust statistical result. The function returns the KS_stat and the p-value. The KS_stat tells us how well the power law distribution fits our data, i.e to a lower value better corresponds a better fit. However, this measure alone is not enough to tell how likely it is that data is drawn from a power law. For that reason the function also returns the p-value. One has to choose a confidence interval $\alpha$ while running the test, usually the used values are 1%, 3%, 5%. Getting a value higher then the chosen $\alpha$ means that the fit is "good" and the higher the value is better the fit (sometimes we even get 1 when we rounded to two decimal places). 
 
 P.S.
-We are both looking forward to learning more these kind of tests during the rest of the course.
+We are both looking forward to learning more about these kind of tests during the rest of the course.
 Below it is reported a summary table with the KS_statistics and the p-value:
 
 ```{r echo = FALSE, results = 'asis', include=TRUE}
+# Compute KS-test:
 
 ks_stat <- rep(0, 5)
 p_value <- rep(0, 5)
 m = 1
 for (df in df_list){
   
-  results <- fit_power_law(df$V2, xmin=1)
-  ks_stat[m] <- round(results$KS.stat,2)
-  p_value[m] <- round(results$KS.p,2)
+  results <- fit_power_law(df$V2, xmin=1) #compute KS-Test
+  ks_stat[m] <- round(results$KS.stat,4) # get KS-stat
+  p_value[m] <- round(results$KS.p,4) #get p-value
   m = m+1
 }
 
@@ -309,42 +320,82 @@ ks_df <- data.frame(cbind(graph_names, ks_stat, p_value))
 kable(ks_df, caption= "Kolmogorov-Smirnov Goodness of Fit Test")
 ```
 
+As a comparison, below is returned the result of a KS test on a graph generated with $\gamma$ = 1 (this means that every new link is added uniformly at random to already existing node).   
 
-As a comparison, this is the result of a KS test on a graph generated with $\gamma$ = 1 (this means that every new link is added uniformly at random to already existing node).   
-
-```{r}
-set.seed(1765820)
-graph_gamma = graph_generator(200, 1)
+```{r, eval=FALSE, include=TRUE}
+graph_gamma = graph_generator(200000, 1) 
 cm_em_gamma = cumulative_empirical(graph_gamma)
-print(glue("p-value: {fit_power_law(cm_em_gamma[,2], xmin=1)$KS.p}"))
-#plot(x=cm_em_gamma[,1], y=cm_em_gamma[,3], log="xy")
+
+write.csv(graph_gamma, "graphs_matrices/graph_gamma.csv", row.names = F)
+write.csv(cm_em_gamma, glue("distributions_matrices/cm_em_gamma.csv"), row.names = F)
+```
+
+```{r, eval=TRUE, include=FALSE}
+cm_em_gamma = as.data.frame(read.csv("distributions_matrices/cm_em_gamma.csv"))
+```
+
+```{r, eval=TRUE, include=TRUE}
+cm_em_gamma = as.data.frame(read.csv("distributions_matrices/cm_em_gamma.csv"))
+print(glue("p-value: {round(fit_power_law(cm_em_gamma[,2], xmin=1)$KS.p,4)}"))
 ```
 
 
-It is clear from the following graph and supported by the p-value KS-test on a power law fit, the generated graph does not follow a power law distribution.  
-```{r}
-cm_em_gamma_df = as.data.frame(cumulative_empirical(graph_gamma))
-p5 <- ggplot(cm_em_gamma_df, aes(x=log(V1), y=log(V3))) +
+It is clear from the following plot, and supported by the p-value from the KS-test, that the generated graph does not follow a power law distribution:  
+
+```{r, eval=TRUE, include=TRUE, message=FALSE, warning=FALSE}
+
+p_gamma <- ggplot(cm_em_gamma, aes(x=log(V1), y=log(V3))) +
   geom_point(size=1, color="#0294A5")+
   geom_smooth(method=lm, se=FALSE, linetype="dashed", color="#C1403D")+ 
-  ggtitle(expression(paste("Cumulative & fitting line for ",gamma,"=1"))) +
+  ggtitle(expression(paste("Cumulative & fitting line for ",gamma," =1"))) +
   xlab("K in log scale") + ylab("Cumulative in log scale") +
   theme(
-    plot.title = element_text(color="#0294A5", size=8, face="bold.italic"),
-    axis.title.x = element_text(color="black", size=6, face="bold"),
-    axis.title.y = element_text(color="black", size=6, face="bold")
+    plot.title = element_text(color="#0294A5", size=25, face="bold.italic"),
+    axis.title.x = element_text(color="black", size=10, face="bold"),
+    axis.title.y = element_text(color="black", size=10, face="bold")
   )
-p5
+p_gamma
 ```
 
 
-Plotting a graph with 1000000 
+The visualization of a huge graph is always a big issue, for that reason it has been decided to plot only the edges of two graphs, one generated using $\gamma$=.5 and the other one with $\gamma$= 1, both having 100000 nodes/edges. 
 
+**We have also plotted two graphs, with the same generating processes, but with 1.000.000 edges.** To see the details, they required to be saved with a very high resolution that does not fit with the R markdown. For that reason we haven't included them into the markdown but **can be found inside the images folder under the names "power_law.png" and "not_power_law.png".** Of course, in  order to see the details it is necessary to **_zoom deeply_** into every picture.
 
+As it is possible to see from the figure below, there is a significant difference between the two graphs:
 
+* **graph B:** the edges in the graph that follows a power law distribution has a small number of very high degree nodes and the edges are concentrated around a small number of very high degree nodes.
 
+* **graph A:** in the graph on the left this is not the same, in fact it is not possible to distinguish a high concentration of edges around few nodes.
 
+```{r, eval=TRUE, include=TRUE}
+# (1) graph with gamma = 1
+g_100000_random <- graph_generator(100000,gamma=1)
+g_graph_100000_random <- graph_from_edgelist(cbind(g_100000_random$one,g_100000_random$two), directed = FALSE)# we have inserted directed=FALSE just because we don't want to plot the edges arrows in the visualization
 
+# (2) graph graph with gamma = .5
+g_100000 <- graph_generator(100000)
+g_graph_100000 <- graph_from_edgelist(cbind(g_100000$one,g_100000$two), directed = FALSE) # we have inserted directed=FALSE just because we don't want to plot the edges arrows in the visualization
+```
 
+```{r, eval=FALSE, include=TRUE, message=FALSE, warning=FALSE}
+png("images/100000_edges_high_resolution.png", width = 16000, height = 13193)
 
+par(mfrow=c(1,2))
 
+# (1) graph with gamma = 1
+plot(g_graph_100000_random, vertex.size = 0, edge.size = 0.001,
+     vertex.label=NA, vertex.frame.color=NA, vertex.color =NA,
+     edge.color='black')
+title(main='Graph A',line = -40, cex.main=30)
+
+# (2) graph graph with gamma = .5
+plot(g_graph_100000, vertex.size = 0, edge.size = 0.001, vertex.label=NA,
+     vertex.frame.color=NA, vertex.color =NA, edge.color='black')
+
+title(main='Graph B', line = -40, cex.main=30)
+dev.off()
+```
+The figure below has been exported, by setting an high resolution, and rendered here in the markdown as a separated image.
+
+![](images/100000_edges_high_resolution.png)

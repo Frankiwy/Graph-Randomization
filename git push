@@ -1,0 +1,59 @@
+[33mcommit 873392f905317a4bb8577d3d1a3c619ea6a55541[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m)[m
+Author: Franscesco Romeo <romeofrancesco@yahoo.com>
+Date:   Thu Nov 5 13:36:00 2020 +0100
+
+    add the new .html
+
+[1mdiff --git a/Graph-Randomization.Rproj b/Graph-Randomization.Rproj[m
+[1mnew file mode 100644[m
+[1mindex 0000000..8e3c2eb[m
+[1m--- /dev/null[m
+[1m+++ b/Graph-Randomization.Rproj[m
+[36m@@ -0,0 +1,13 @@[m
+[32m+[m[32mVersion: 1.0[m
+[32m+[m
+[32m+[m[32mRestoreWorkspace: Default[m
+[32m+[m[32mSaveWorkspace: Default[m
+[32m+[m[32mAlwaysSaveHistory: Default[m
+[32m+[m
+[32m+[m[32mEnableCodeIndexing: Yes[m
+[32m+[m[32mUseSpacesForTab: Yes[m
+[32m+[m[32mNumSpacesForTab: 2[m
+[32m+[m[32mEncoding: UTF-8[m
+[32m+[m
+[32m+[m[32mRnwWeave: Sweave[m
+[32m+[m[32mLaTeX: pdfLaTeX[m
+[1mdiff --git a/Part-A.Rmd b/Part-A.Rmd[m
+[1mnew file mode 100644[m
+[1mindex 0000000..a4a55bc[m
+[1m--- /dev/null[m
+[1m+++ b/Part-A.Rmd[m
+[36m@@ -0,0 +1,28 @@[m
+[32m+[m[32m---[m
+[32m+[m[32mtitle: "Part A"[m
+[32m+[m[32moutput: html_document[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m```{r setup, include=FALSE}[m
+[32m+[m[32mknitr::opts_chunk$set(echo = TRUE)[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m## R Markdown[m
+[32m+[m
+[32m+[m[32mThis is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.[m
+[32m+[m
+[32m+[m[32mWhen you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:[m
+[32m+[m
+[32m+[m[32m```{r cars}[m
+[32m+[m[32msummary(cars)[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m## Including Plots[m
+[32m+[m
+[32m+[m[32mYou can also embed plots, for example:[m
+[32m+[m
+[32m+[m[32m```{r pressure, echo=FALSE}[m
+[32m+[m[32mplot(pressure)[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32mNote that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.[m
